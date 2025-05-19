@@ -10,18 +10,27 @@ CHAT_ID = "-1002253686606"  # ID do grupo onde as mensagens serão enviadas
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.get_json()
-    message = data.get('message', '🚨 Alerta recebido sem mensagem específica.')
+    try:
+        # Força o Flask a tratar o corpo como JSON válido
+        data = request.get_json(force=True)
+        message = data.get('message')
 
-    send_telegram_message(message)
-    return {'ok': True}
+        if not message:
+            message = "⚠️ Erro: Nenhuma mensagem encontrada no alerta."
+
+        send_telegram_message(message)
+        return {'ok': True}
+    
+    except Exception as e:
+        # Em caso de falha inesperada, retorna erro
+        return {'ok': False, 'error': str(e)}, 500
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": CHAT_ID,
         "text": message,
-        "parse_mode": "HTML"  # ou "Markdown" se preferir
+        "parse_mode": "HTML"
     }
     requests.post(url, json=payload)
 
