@@ -5,15 +5,17 @@ import traceback
 
 app = Flask(__name__)
 
-# === CONFIGURAÇÃO REAL ===
 TELEGRAM_TOKEN = "7692622201:AAEDjhEdLX-mqXSgfHBimT9o6Uv9QDjyyKg"
 CHAT_ID = "-1002253686606"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
-        data = request.get_json(force=True)
-        message = data.get('message', '🚨 Alerta recebido sem mensagem específica.')
+        # Tenta extrair o texto bruto do corpo
+        raw_data = request.data.decode("utf-8").strip()
+
+        # Usa isso como mensagem
+        message = raw_data if raw_data else '🚨 Alerta recebido sem conteúdo.'
 
         send_telegram_message(message)
         return {'ok': True}, 200
