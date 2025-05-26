@@ -7,17 +7,26 @@ app = Flask(__name__)
 
 TELEGRAM_TOKEN = "7692622201:AAEDjhEdLX-mqXSgfHBimT9o6Uv9QDjyyKg"
 CHAT_ID = "-1002253686606"
+GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/SEU_WEBHOOK_ID/exec"  # Substitua aqui
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
-        # Tenta extrair o texto bruto do corpo
+        # Extrai o texto bruto do corpo da requisição
         raw_data = request.data.decode("utf-8").strip()
-
-        # Usa isso como mensagem
         message = raw_data if raw_data else '🚨 Alerta recebido sem conteúdo.'
 
+        # Envia ao Telegram
         send_telegram_message(message)
+
+        # Processa e envia ao Google Sheets, se o alerta contiver dados estruturados em JSON
+        try:
+            json_data = request.get_json(force=True)
+            if json_data and isinstance(json_data, dict) and "type" in json_data:
+                post_to_google_sheets(json_data)
+        except Exception as parse_error:
+            print("Alerta em texto livre — JSON não detectado.")
+
         return {'ok': True}, 200
 
     except Exception as e:
@@ -33,6 +42,22 @@ def send_telegram_message(message):
         "parse_mode": "HTML"
     }
     requests.post(url, json=payload)
+
+def post_to_google_sheets(data):
+    payload = {
+        "asset": data.get("asset", "XAUUSD"),
+        "type": data.get("type", "Signal Alert"),
+        "direction": data.get("direction", ""),
+        "strength": data.get("strength", ""),
+        "confidence": data.get("confidence", ""),
+        "entry": data.get("entry", ""),
+        "tp": data.get("tp", ""),
+        "sl": data.get("sl", "")
+    }
+    try:
+        requests.post(GOOGLE_SHEETS_WEBHOOK_URL, json=payload, timeout=5)
+    except Exception as err:
+        print("Erro ao enviar para Google Sheets:", err)
 
 if __name__ == '__main__':
     app.run(debug=True)
