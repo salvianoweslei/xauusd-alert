@@ -12,20 +12,23 @@ GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxHBm_4UMQ
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
-        # Extrai o texto bruto do corpo da requisição
-        raw_data = request.data.decode("utf-8").strip()
-        message = raw_data if raw_data else '🚨 Alerta recebido sem conteúdo.'
+        json_data = None
 
-        # Envia ao Telegram
-        send_telegram_message(message)
-
-        # Processa e envia ao Google Sheets, se o alerta contiver dados estruturados em JSON
+        # Tenta interpretar como JSON
         try:
             json_data = request.get_json(force=True)
-            if json_data and isinstance(json_data, dict) and "type" in json_data:
-                post_to_google_sheets(json_data)
-        except Exception as parse_error:
-            print("Alerta em texto livre — JSON não detectado.")
+        except:
+            pass
+
+        # Se NÃO for JSON válido, envia como texto para o Telegram
+        if not json_data or not isinstance(json_data, dict) or "type" not in json_data:
+            raw_data = request.data.decode("utf-8").strip()
+            message = raw_data if raw_data else '🚨 Alerta recebido sem conteúdo.'
+            send_telegram_message(message)
+
+        # Se for JSON válido, envia para Google Sheets
+        if json_data and isinstance(json_data, dict) and "type" in json_data:
+            post_to_google_sheets(json_data)
 
         return {'ok': True}, 200
 
@@ -52,7 +55,8 @@ def post_to_google_sheets(data):
         "confidence": data.get("confidence", ""),
         "entry": data.get("entry", ""),
         "tp": data.get("tp", ""),
-        "sl": data.get("sl", "")
+        "sl": data.get("sl", ""),
+        "timestamp": data.get("timestamp", "")
     }
     try:
         requests.post(GOOGLE_SHEETS_WEBHOOK_URL, json=payload, timeout=5)
