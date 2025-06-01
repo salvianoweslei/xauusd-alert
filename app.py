@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 TELEGRAM_TOKEN = "7692622201:AAEDjhEdLX-mqXSgfHBimT9o6Uv9QDjyyKg"
 CHAT_ID = "-1002253686606"
-GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby0KI053Qy3VJcxfT-93X9HNvNv0s2VAyj8e3ERK8q1tkO9sHmF_Lei984XxWuJDyq8/exec"
+GOOGLE_SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwxHBm_4UMQnEZevT2voqCixRcD0fUP1ISdSd7vV5Q9sOrG49YP_-GU3NHFmLyg4t03/exec"
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
