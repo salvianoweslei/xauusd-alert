@@ -1,6 +1,5 @@
 from flask import Flask, request
 import requests
-import os
 import traceback
 
 app = Flask(__name__)
@@ -48,6 +47,7 @@ def send_telegram_message(message):
 
 def post_to_google_sheets(data):
     payload = {
+        "id": data.get("id", ""),                   # ✅ Adicionado: garante que o ID seja enviado à planilha
         "asset": data.get("asset", "XAUUSD"),
         "type": data.get("type", "Signal Alert"),
         "direction": data.get("direction", ""),
